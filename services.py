@@ -39,7 +39,7 @@ def get():
         records = cursor.execute(query)
         for items in records:
             service_details.append({'id': items[0], 'service_name': items[1], 'price': items[2]})
-        return service_details
+        return service_details, 200
     except Exception as e:
         print(str(e))
         return {'message': 'Something went wrong'}, 500

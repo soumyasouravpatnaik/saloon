@@ -1,8 +1,9 @@
 import sqlite3
-from utilities import find_booking_date, find_slots_by_stylists, convert_to_string
+from utilities import find_booking_date, find_slots_by_stylists, convert_to_string, check_blacklisted
 import users
 import services
 import slots
+
 from flask import jsonify
 
 
@@ -52,14 +53,26 @@ def put(json_object=None):
             return {'message': 'Already a booking exists for the same slot and same date. Please try another slot'
                 .format(booking_date)}, 409
         elif check_slot_for_stylist[0] is False:
-            query = "INSERT INTO %s(date, slotID,stylistID,servicesID,status,clientID) " \
-                    "VALUES('%s', '%s', %d, %d, '%s', %d)" \
-            % (table_name, convert_to_string(booking_date), convert_to_string(slotID), int(convert_to_string(stylistID)),int(convert_to_string(servicesID)), 'Open', int(convert_to_string(clientID)))
-            print(query)
-            cursor.execute(query)
-            connection.commit()
-            return {'message': 'Booking created for date - {} successfully'.format(
-                convert_to_string(booking_date))}, 201
+            not_blacklisted_stylists = check_blacklisted(stylistID)
+            not_blacklisted_clients = check_blacklisted(clientID, table_name='clients')
+
+            if not_blacklisted_stylists[0] and not_blacklisted_clients[0]:
+                query = "INSERT INTO %s(date, slotID,stylistID,servicesID,status,clientID) " \
+                        "VALUES('%s', '%s', %d, %d, '%s', %d)" \
+                % (table_name, convert_to_string(booking_date), convert_to_string(slotID),
+                   int(convert_to_string(stylistID)),int(convert_to_string(servicesID)), 'Open',
+                   int(convert_to_string(clientID)))
+                print(query)
+                cursor.execute(query)
+                connection.commit()
+                return {'message': 'Booking created for date - {} successfully'.format(
+                    convert_to_string(booking_date))}, 201
+            else:
+                print(not_blacklisted_stylists)
+                print(not_blacklisted_clients)
+
+                return ({'message': 'Stylists is inactive.'}, 201) if not_blacklisted_stylists[0] is False else \
+                    ({'message': 'Client is inactive.'}, 201)
     except Exception as e:
         print(str(e))
         return {'message': 'Something went wrong'}, 500
@@ -80,10 +93,30 @@ def get():
         for items in records:
             booking_details.append({'id': items[0], 'booking_date': items[1], 'slotID': items[2], 'stylistID': items[3],
                                      'servicesID': items[4], 'status': items[5], 'clientID': items[6]})
-        return booking_details
+        return booking_details, 200
     except Exception as e:
         print(str(e))
-        return booking_details
+        return {'message': 'Something went wrong'}, 500
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def cancel(json_object):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    table_name = 'bookings'
+    try:
+        booking_id = json_object.get('booking_id')
+        query = "UPDATE %s SET status='Cancelled' WHERE id=%d AND slotID='%s'" % (table_name, int(convert_to_string(booking_id)))
+        print(query)
+        cursor.execute(query)
+        connection.commit()
+        return {'message': 'Booking - {} cancelled successfully'.format(
+            convert_to_string(booking_id))}, 201
+    except Exception as e:
+        print(str(e))
+        return {'message': 'Something went wrong'}, 500
     finally:
         cursor.close()
         connection.close()
@@ -101,7 +134,7 @@ def get_appointments(date):
         records = cursor.execute(query)
         record = records.fetchall()
         for items in record:
-            if items[4] is not None:
+            if items[4] != 'Cancelled' and items[4] is not None:
                 stylist_name = convert_to_string(users.get_one('stylists', items[0])[0]['name'])
                 client_name = convert_to_string(users.get_one('clients', items[5])[0]['name'])
                 service_name = convert_to_string(services.get_one(items[3])[0]['service_name'])
@@ -109,9 +142,11 @@ def get_appointments(date):
                 booking_details.append({'stylist_name': stylist_name, 'booking_date': items[1], 'slotID': slot,
                                         'services': service_name, 'status': items[4], 'client': client_name})
                 print(booking_details)
-        return booking_details
+        return (booking_details, 200) if bool(booking_details) else ({'message': 'No appointments available for {}'
+                                                                     .format(date)}, 404)
     except Exception as e:
         print(str(e))
+        return {'message': 'Something went wrong'}, 500
     finally:
         cursor.close()
         connection.close()

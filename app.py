@@ -3,6 +3,7 @@ import bookings
 import services
 import users
 import slots
+import utilities
 app = Flask(__name__)
 
 client = [
@@ -45,7 +46,8 @@ def login_client():
 
 @app.route('/clients', methods=['GET'])
 def get_all_clients_details():
-    return jsonify(users.get(flag='clients')), 200
+    response_object = users.get(flag='clients')
+    return jsonify(response_object[0]), int(response_object[1])
 
 
 @app.route('/client/<int:id>', methods=['GET'])
@@ -58,9 +60,16 @@ def delete_client(id):
     pass
 
 
-@app.route('/blacklistclient/<int:id>', methods=['PUT'])
-def toggle_blacklist_client(id):
-    pass
+@app.route('/blacklist/client/<int:id>/<string:active>', methods=['PUT'])
+def toggle_blacklist_client(id, active):
+    response_object = utilities.toggle_black_list(user_id=id, flag='clients', active=active)
+    return jsonify(response_object[0]), int(response_object[1])
+
+
+@app.route('/blacklist/stylist/<int:id>/<string:active>', methods=['PUT'])
+def toggle_blacklist_stylist(id, active):
+    response_object = utilities.toggle_black_list(user_id=id, flag='stylists', active=active)
+    return jsonify(response_object[0]), int(response_object[1])
 
 # Register Stylist
 
@@ -74,7 +83,8 @@ def register_stylist():
         'email': request_data['email'],
         'password': request_data['password'],
         'joining_date': request_data['joining_date'],
-        'speciality': request_data['speciality']
+        'speciality': request_data['speciality'],
+        'black_listed': request_data['black_listed'],
     }
     response_object = users.post(json_object=new_stylist, flag='stylists')
     return jsonify(response_object[0]), int(response_object[1])
@@ -82,7 +92,8 @@ def register_stylist():
 
 @app.route('/stylists', methods=['GET'])
 def get_stylists():
-    return jsonify(users.get(flag='stylists')), 200
+    response_object = users.get(flag='stylists')
+    return jsonify(response_object[0]), int(response_object[1])
 
 
 @app.route('/stylistlogin', methods=['POST'])
@@ -140,9 +151,20 @@ def create_booking_call():
     return jsonify(response_object[0]), int(response_object[1])
 
 
+@app.route('/booking', methods=['DELETE'])
+def cancel_booking_call():
+    request_data = request.get_json()
+    booking = {
+        'booking_id': request_data['booking_id'],
+    }
+    response_object = bookings.cancel(json_object=booking)
+    return jsonify(response_object[0]), int(response_object[1])
+
+
 @app.route('/booking', methods=['GET'])
 def get_booking():
-    return jsonify(bookings.get()), 200
+    response_object = bookings.get()
+    return jsonify(response_object[0]), int(response_object[1])
 
 
 @app.route('/services', methods=['POST'])
@@ -158,21 +180,21 @@ def create_services():
 
 @app.route('/services', methods=['GET'])
 def get_all_services():
-    return jsonify(services.get()), 200
+    response_object = services.get()
+    return jsonify(response_object[0]), int(response_object[1])
 
 
 @app.route('/appointments/<int:date>', methods=['GET'])
 def get_all_appointments(date):
     print(date)
-    data = bookings.get_appointments(date)
-    if not data:
-        return jsonify({'message': 'No appointments available for {}'.format(date)}), 404
-    return jsonify(data), 200
+    response_object = bookings.get_appointments(date)
+    return jsonify(response_object[0]), int(response_object[1])
 
 
 @app.route('/slots', methods=['GET'])
 def get_slots():
-    return jsonify(slots.get_all_slots()), 200
+    response_object = slots.get_all_slots()
+    return jsonify(response_object[0]), int(response_object[1])
 
 
 if __name__ == '__main__':

@@ -55,7 +55,7 @@ def find_slots_by_stylists(date=None, slot_id=None, stylist_id=None, table_name=
         if date:
             connection = sqlite3.connect('database.db')
             cursor = connection.cursor()
-            query = "SELECT id FROM %s WHERE date='%s' AND stylistID=%d AND slotID='%s'" % (table_name, date,
+            query = "SELECT id FROM %s WHERE date='%s' AND stylistID=%d AND slotID='%s' AND status='Open'" % (table_name, date,
                                                                                             int(stylist_id), slot_id)
             cursor.execute(query)
             record = cursor.fetchone()
@@ -67,6 +67,27 @@ def find_slots_by_stylists(date=None, slot_id=None, stylist_id=None, table_name=
             return existence
     except:
         existence = False, 'Exception'
+        return existence
+
+
+def check_blacklisted(stylist_id=None, table_name='stylists'):
+    existence = False, None, table_name
+    stylist_id = convert_to_string(name=stylist_id)
+    try:
+        if stylist_id:
+            connection = sqlite3.connect('database.db')
+            cursor = connection.cursor()
+            query = "SELECT id FROM %s WHERE id=%d AND black_listed='%s'" % (table_name, int(stylist_id), 'N')
+            cursor.execute(query)
+            record = cursor.fetchone()
+            if record:
+                existence = True, None, table_name
+                # return {'message': 'User with phone number - {} already exists'.format(phone)}, 409
+            cursor.close()
+            connection.close()
+            return existence
+    except:
+        existence = False, 'Exception', table_name
         return existence
 
 
@@ -99,3 +120,17 @@ def convert_to_string(name=None):
         print(type(name))
         return name
     return str(name)
+
+
+def toggle_black_list(user_id=None, flag=None, active='N'):
+    try:
+        connection = sqlite3.connect('database.db')
+        cursor = connection.cursor()
+        query = "UPDATE %s SET black_listed='%s' WHERE id='%s'" % (flag, active, user_id)
+        cursor.execute(query)
+        connection.commit()
+        connection.close()
+        return {'message': 'BlackList - {} updated successfully for {} - {}'. format(active, flag, user_id)}, 201
+    except Exception as e:
+        print(str(e))
+        return {'message': 'Something went wrong'}, 500

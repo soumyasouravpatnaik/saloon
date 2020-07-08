@@ -12,10 +12,10 @@ def get_all_slots():
         records = cursor.execute(query)
         for items in records:
             slots.append({'id': items[0], 'slotID': items[1], 'slotDesc': items[2]})
-        return slots
+        return slots, 200
     except Exception as e:
         print(str(e))
-        return slots
+        return {'message': 'Something went wrong'}, 500
     finally:
         cursor.close()
         connection.close()

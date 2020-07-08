@@ -29,7 +29,7 @@ def create_tables():
     cursor = connection.cursor()
     query = {
         'clients': 'CREATE TABLE IF NOT EXISTS clients(id INTEGER PRIMARY KEY AUTOINCREMENT, name text, phone INTEGER, email text, password text, joining_date text, black_listed text)',
-        'stylists': 'CREATE TABLE IF NOT EXISTS stylists(id INTEGER PRIMARY KEY AUTOINCREMENT,name text, phone INTEGER, email text ,speciality text,joining_date text, password text)',
+        'stylists': 'CREATE TABLE IF NOT EXISTS stylists(id INTEGER PRIMARY KEY AUTOINCREMENT,name text, phone INTEGER, email text ,speciality text, black_listed text,joining_date text, password text)',
         'services': 'CREATE TABLE IF NOT EXISTS services(id INTEGER PRIMARY KEY AUTOINCREMENT,name text, price real)',
         'bookings': 'CREATE TABLE IF NOT EXISTS bookings(id INTEGER PRIMARY KEY AUTOINCREMENT,date text, slotID text, stylistID INTEGER, servicesID INTEGER, status text, clientID INTEGER)'
     }
