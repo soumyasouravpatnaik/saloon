@@ -117,13 +117,17 @@ def login(json_object=None, flag=None):
         phone = json_object.get('phone'),
         password = json_object.get('password')
         if phone and password:
-            query = "SELECT name FROM %s WHERE phone=%s AND password='%s'" % (table_name, int(convert_to_string(phone)),
-                                                                            convert_to_string(password))
+            query = "SELECT name,black_listed FROM %s WHERE phone=%s AND password='%s'" % (table_name,
+                                                                                       int(convert_to_string(phone)),
+                                                                                        convert_to_string(password))
             cursor.execute(query)
             record = cursor.fetchone()
-            print(convert_to_string(record))
+            print(convert_to_string(record[0]))
             if record:
-                return {'message': 'User - %s successfully Logged in..'% record}, 200
+                if convert_to_string(record[1]) == 'N':
+                    return {'message': 'User - %s successfully Logged in..' % convert_to_string(record[0])}, 200
+                else:
+                    return {'message': 'User - %s is marked inactive. Please contact Admin..' % convert_to_string(record[0])}, 200
             else:
                 return {'message': 'Invalid Credentials. Try Again'}, 200
     except Exception as e:

@@ -4,7 +4,14 @@ import services
 import users
 import slots
 import utilities
+import db
 app = Flask(__name__)
+app.secret_key = 'ABC'
+
+@app.before_first_request
+def tables():
+    db.create_tables()
+
 
 client = [
     {
@@ -112,6 +119,15 @@ def login_stylist():
 def get_one_stylist_details(id):
     return jsonify(users.get_one(flag='stylists', user_id=id)), 200
 
+
+@app.route('/client/changepwd', methods=['PUT'])
+def change_client_password():
+    pass
+
+
+@app.route('/stylist/changepwd', methods=['PUT'])
+def change_stylist_password():
+    pass
 
 def delete_stylists():
     pass
