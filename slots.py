@@ -19,3 +19,23 @@ def get_all_slots():
     finally:
         cursor.close()
         connection.close()
+
+
+def get_one(slot_id=None):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    table_name = 'slots'
+    slot_details = []
+    try:
+        query = "SELECT slotDesc FROM %s WHERE slotID='%s'" % (table_name, slot_id)
+        print(query)
+        records = cursor.execute(query)
+        for items in records:
+            slot_details.append({'slotDesc': items[0]})
+        return slot_details
+    except Exception as e:
+        print(str(e))
+        # return {'message': 'Something went wrong'}, 500
+    finally:
+        cursor.close()
+        connection.close()

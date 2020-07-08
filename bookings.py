@@ -2,6 +2,7 @@ import sqlite3
 from utilities import find_booking_date, find_slots_by_stylists, convert_to_string
 import users
 import services
+import slots
 from flask import jsonify
 
 
@@ -51,8 +52,9 @@ def put(json_object=None):
             return {'message': 'Already a booking exists for the same slot and same date. Please try another slot'
                 .format(booking_date)}, 409
         elif check_slot_for_stylist[0] is False:
-            query = "INSERT INTO %s(date, slotID,stylistID,servicesID,status,clientID) VALUES('%s', '%s', %d, %d, '%s', %d)" \
-            %(table_name, convert_to_string(booking_date), convert_to_string(slotID), int(convert_to_string(stylistID)),int(convert_to_string(servicesID)), 'Open', int(convert_to_string(clientID)))
+            query = "INSERT INTO %s(date, slotID,stylistID,servicesID,status,clientID) " \
+                    "VALUES('%s', '%s', %d, %d, '%s', %d)" \
+            % (table_name, convert_to_string(booking_date), convert_to_string(slotID), int(convert_to_string(stylistID)),int(convert_to_string(servicesID)), 'Open', int(convert_to_string(clientID)))
             print(query)
             cursor.execute(query)
             connection.commit()
@@ -93,7 +95,8 @@ def get_appointments(date):
     table_name = 'bookings'
     booking_details = []
     try:
-        query = "SELECT stylistID, date, slotID, servicesID, status, clientID FROM %s WHERE date='%s'" % (table_name, convert_to_string(date))
+        query = "SELECT stylistID, date, slotID, servicesID, status, clientID FROM %s WHERE date='%s'" % (table_name,
+                                                                                              convert_to_string(date))
         print(query)
         records = cursor.execute(query)
         record = records.fetchall()
@@ -102,7 +105,8 @@ def get_appointments(date):
                 stylist_name = convert_to_string(users.get_one('stylists', items[0])[0]['name'])
                 client_name = convert_to_string(users.get_one('clients', items[5])[0]['name'])
                 service_name = convert_to_string(services.get_one(items[3])[0]['service_name'])
-                booking_details.append({'stylist_name': stylist_name, 'booking_date': items[1], 'slotID': items[2],
+                slot = convert_to_string(slots.get_one(items[2])[0]['slotDesc'])
+                booking_details.append({'stylist_name': stylist_name, 'booking_date': items[1], 'slotID': slot,
                                         'services': service_name, 'status': items[4], 'client': client_name})
                 print(booking_details)
         return booking_details
