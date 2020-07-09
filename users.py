@@ -1,45 +1,43 @@
 import sqlite3
-from utilities import find_by_user_phoneno, convert_to_string, sendmail, temp_password, find_by_user_id
+from utilities import find_by_user_phoneno, convert_to_string, sendmail, temp_password, find_by_user_id, validator
 
 
 def post(json_object=None, flag=None):
     connection = sqlite3.connect('database.db')
     cursor = connection.cursor()
     table_name = flag
-    # name, phone, email, password, joining_date, col = '', '', '', '', '', ''
-    name = ''
     try:
-        name = json_object.get('name'),
-        phone = json_object.get('phone'),
-        email = json_object.get('email'),
-        password = json_object.get('password'),
-        joining_date = json_object.get('joining_date')
-        black_listed = json_object['black_listed']
-
+        name = convert_to_string(json_object.get('name'))
+        phone = convert_to_string(json_object.get('phone'))
+        email = convert_to_string(json_object.get('email'))
+        password = convert_to_string(json_object.get('password'))
+        joining_date = convert_to_string(json_object.get('joining_date'))
+        black_listed = convert_to_string(json_object['black_listed'])
+        validate = validator(name=name, phone=phone, email=email, password=password)
+        print(validate)
+        if 'False' in validate:
+            return {'message': 'Data Validation Failed'}, 400
         check_user = find_by_user_phoneno(phone, table_name)
         if check_user[1] == 'Exception':
             return {'message': 'Caught Exception'}, 500
         elif check_user[0] is True:
             return {'message': 'User with phone number - {} already exists'.format(convert_to_string(phone))}, 409
         if flag in ['stylists']:
-            speciality = json_object['speciality']
+            speciality = convert_to_string(json_object['speciality'])
             stylist_query = "INSERT INTO %s(name,phone,email,password,joining_date,black_listed,speciality) " \
-                            "VALUES('%s',%d,'%s','%s','%s','%s','%s')" % (table_name, convert_to_string(name),
-                                                     int(convert_to_string(phone)), convert_to_string(email),
-                                                     convert_to_string(password),
-                                                     convert_to_string(joining_date),convert_to_string(black_listed),
-                                                     convert_to_string(speciality))
+                            "VALUES('%s',%d,'%s','%s','%s','%s','%s')" % (table_name, name, int(phone), email,
+                                                                          password, joining_date, black_listed,
+                                                                          speciality)
             print(stylist_query)
             cursor.execute(stylist_query)
         else:
             client_query = "INSERT INTO %s(name,phone,email,password,joining_date,black_listed) VALUES('%s',%d,'%s'," \
-                           "'%s','%s','%s')" % (table_name, convert_to_string(name), int(convert_to_string(phone)),
-                                                convert_to_string(email), convert_to_string(password),
-                                                convert_to_string(joining_date), convert_to_string(black_listed))
+                           "'%s','%s','%s')" % (table_name, name, int(phone), email, password, joining_date,
+                                                black_listed)
             print(client_query)
             cursor.execute(client_query)
         connection.commit()
-        return {'message': '{} - {} created successfully'.format(flag, convert_to_string(name))}, 201
+        return {'message': '{} - {} created successfully'.format(flag, name)}, 201
     except Exception as e:
         print(str(e))
         return {'message': 'Something went wrong'}, 500
@@ -115,21 +113,23 @@ def login(json_object=None, flag=None):
     table_name = flag
     try:
         phone = json_object.get('phone'),
-        password = json_object.get('password')
-        if phone and password:
-            query = "SELECT name,black_listed FROM %s WHERE phone=%s AND password='%s'" % (table_name,
-                                                                                       int(convert_to_string(phone)),
-                                                                                        convert_to_string(password))
-            cursor.execute(query)
-            record = cursor.fetchone()
-            print(convert_to_string(record[0]))
-            if record:
-                if convert_to_string(record[1]) == 'N':
-                    return {'message': 'User - %s successfully Logged in..' % convert_to_string(record[0])}, 200
-                else:
-                    return {'message': 'User - %s is marked inactive. Please contact Admin..' % convert_to_string(record[0])}, 200
+        password = convert_to_string(json_object.get('password'))
+        validate = validator(phone=convert_to_string(phone), password=password)
+        print(validate)
+        if 'False' in validate:
+            return {'message': 'Data Validation Failed'}, 400
+        query = "SELECT name,black_listed FROM %s WHERE phone=%d AND password='%s'" % (table_name, int(convert_to_string(phone)),
+                                                                                       password)
+        cursor.execute(query)
+        record = cursor.fetchone()
+        print(convert_to_string(record[0]))
+        if record:
+            if convert_to_string(record[1]) == 'N':
+                return {'message': 'User - %s successfully Logged in..' % convert_to_string(record[0])}, 200
             else:
-                return {'message': 'Invalid Credentials. Try Again'}, 200
+                return {'message': 'User - %s is marked inactive. Please contact Admin..' % convert_to_string(record[0])}, 200
+        else:
+            return {'message': 'Invalid Credentials. Try Again'}, 200
     except Exception as e:
         print(str(e))
         return {'message': 'Something went wrong'}, 500
@@ -143,12 +143,16 @@ def password_reset(json_object=None, id=id, flag=None):
     cursor = connection.cursor()
     table_name = flag
     try:
-        email = json_object.get('email')
+        id = convert_to_string(id)
+        email = convert_to_string(json_object.get('email')).lower()
+        validate = validator(email=email, number=id)
+        print(validate)
+        if 'False' in validate:
+            return {'message': 'Data Validation Failed'}, 400
         # password = json_object.get('password')
         if email:
-            query = "SELECT email,black_listed,name FROM %s WHERE LOWER(email)='%s' AND id=%d" % (table_name,
-                                                                                    convert_to_string(email).lower(),
-                                                                                      int(convert_to_string(id)))
+            query = "SELECT email,black_listed,name FROM %s WHERE LOWER(email)='%s' AND id=%d" % (table_name, email,
+                                                                                                  int(id))
             cursor.execute(query)
             record = cursor.fetchone()
             # print(convert_to_string(record[0]))
@@ -179,6 +183,10 @@ def update_profile(json_object=None, flag=None):
         phone = json_object.get('phone'),
         email = json_object.get('email'),
         id = json_object.get('id')
+        validate = validator(name=name, phone=phone, email=email, number=id)
+        print(validate)
+        if 'False' in validate:
+            return {'message': 'Data Validation Failed'}, 400
         check_user = find_by_user_id(id, table_name)
         if check_user[1] == 'Exception':
             return {'message': 'Caught Exception'}, 500

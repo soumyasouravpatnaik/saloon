@@ -1,8 +1,10 @@
 import sqlite3
+import re
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from constants import EMAIL_TEMPLATE, sender_email, smtp_ssl, port
+from constants import EMAIL_TEMPLATE, sender_email, smtp_ssl, port, email_standard, phone_standard,\
+    id_standard, pass_standard, name_standard, sname_standard, price_standard
 import random
 
 
@@ -190,7 +192,6 @@ def sendmail(receiver=None, name=None, def_password=None):
             sender_email, receiver_email, message.as_string()
         )
 
-
 def temp_password():
     one_part = random.randint(66, 90)
     sec_part = random.randint(98, 122)
@@ -202,6 +203,48 @@ def temp_password():
     return password
 
 
+def validator(name=None, service_name=None, email=None, phone=None, number=None, password=None, price=None):
+    success_capturer = []
+    if name:
+        if re.match(name_standard, name):
+            success_capturer.append('True')
+        else:
+            success_capturer.append('False')
+    if phone:
+        if re.match(phone_standard, phone):
+            success_capturer.append('True')
+        else:
+            success_capturer.append('False')
+    if email:
+        if re.search(email_standard, email):
+            success_capturer.append('True')
+        else:
+            success_capturer.append('False')
+    if number:
+        if re.match(id_standard, number):
+            success_capturer.append('True')
+        else:
+            success_capturer.append('False')
+    if password:
+        if re.match(pass_standard, password):
+            success_capturer.append('True')
+        else:
+            success_capturer.append('False')
+    if service_name:
+        if re.match(sname_standard, service_name):
+            success_capturer.append('True')
+        else:
+            success_capturer.append('False')
+    if price:
+        if re.match(price_standard, price):
+            success_capturer.append('True')
+        else:
+            success_capturer.append('False')
+
+    return success_capturer
+
+
 # if __name__ == '__main__':
+    # print(validator(name='Slot01'))
 #     temp_password()
 #     sendmail('mailsourav123@gmail.com', name="IronDome", def_password="HGFbsgedhsdf")

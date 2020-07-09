@@ -1,5 +1,5 @@
 import sqlite3
-from utilities import convert_to_string, find_services_by_name
+from utilities import convert_to_string, find_services_by_name, validator
 
 
 def post(json_object=None):
@@ -7,14 +7,18 @@ def post(json_object=None):
     cursor = connection.cursor()
     table_name = 'services'
     try:
-        service_name = json_object.get('service_name')
+        service_name = convert_to_string(json_object.get('service_name'))
         service_price = json_object.get('price')
+        validate = validator(service_name=service_name, price=service_price)
+        print(validate)
+        if 'False' in validate:
+            return {'message': 'Data Validation Failed'}, 400
         check_service = find_services_by_name(name=service_name)
         if check_service[1] == 'Exception':
             return {'message': 'Caught Exception'}, 500
         elif check_service[0] is True:
-            return {'message': 'Service name - {} already exists'.format(convert_to_string(service_name))}, 409
-        query = "INSERT INTO %s(name,price) VALUES('%s','%s')" % (table_name, convert_to_string(service_name),
+            return {'message': 'Service name - {} already exists'.format(service_name)}, 409
+        query = "INSERT INTO %s(name,price) VALUES('%s','%s')" % (table_name, service_name,
                                                                   service_price)
         print(query)
         cursor.execute(query)

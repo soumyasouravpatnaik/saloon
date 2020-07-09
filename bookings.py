@@ -1,5 +1,5 @@
 import sqlite3
-from utilities import find_booking_date, find_slots_by_stylists, convert_to_string, check_blacklisted
+from utilities import find_booking_date, find_slots_by_stylists, convert_to_string, check_blacklisted, validator
 import users
 import services
 import slots
@@ -13,6 +13,10 @@ def post(json_object=None):
     table_name = 'bookings'
     try:
         booking_date = json_object.get('booking_date')
+        validate = validator(number=convert_to_string(booking_date))
+        print(validate)
+        if 'False' in validate:
+            return {'message': 'Data Validation Failed'}, 400
         check_existing_booking = find_booking_date(date=booking_date)
         if check_existing_booking[1] == 'Exception':
             return {'message': 'Caught Exception'}, 500
@@ -41,6 +45,14 @@ def put(json_object=None):
         stylistID = json_object.get('stylistID'),
         servicesID = json_object.get('servicesID'),
         clientID = json_object.get('clientID'),
+        # validate = validator(number=convert_to_string(stylistID)).append(validator(number=convert_to_string(clientID)).append(validator(number=convert_to_string(servicesID))).append(validator(number=convert_to_string(booking_date))))
+        validate_stylistID = validator(number=convert_to_string(stylistID))
+        validate_servicesID = validator(number=convert_to_string(servicesID))
+        validate_clientID = validator(number=convert_to_string(clientID))
+        validate_booking_date = validator(number=convert_to_string(booking_date))
+        validate = validate_stylistID + validate_servicesID + validate_clientID + validate_booking_date
+        if 'False' in validate:
+            return {'message': 'Data Validation Failed'}, 400
         check_existing_booking = find_booking_date(date=booking_date)
         if check_existing_booking[1] == 'Exception':
             return {'message': 'Caught Exception'}, 500

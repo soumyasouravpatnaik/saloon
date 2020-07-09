@@ -8,6 +8,7 @@ import db
 app = Flask(__name__)
 app.secret_key = 'ABC'
 
+
 @app.before_first_request
 def tables():
     db.create_tables()
@@ -24,7 +25,7 @@ client = [
 # Register Client
 
 
-@app.route('/client', methods=['POST', 'PUT'])
+@app.route('/client', methods=['POST'])
 def register_client():
     request_data = request.get_json()
     new_client = {
