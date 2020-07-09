@@ -39,7 +39,7 @@ def register_client():
     return jsonify(response_object[0]), int(response_object[1])
 
 
-@app.route('/clientlogin', methods=['POST'])
+@app.route('/client/login', methods=['POST'])
 def login_client():
     request_data = request.get_json()
     credentials = {
@@ -103,7 +103,7 @@ def get_stylists():
     return jsonify(response_object[0]), int(response_object[1])
 
 
-@app.route('/stylistlogin', methods=['POST'])
+@app.route('/stylist/login', methods=['POST'])
 def login_stylist():
     request_data = request.get_json()
     credentials = {
@@ -120,29 +120,55 @@ def get_one_stylist_details(id):
     return jsonify(users.get_one(flag='stylists', user_id=id)), 200
 
 
-@app.route('/client/changepwd', methods=['PUT'])
-def change_client_password():
-    pass
+@app.route('/client/<int:id>/changepwd', methods=['PUT'])
+def change_client_password(id):
+    request_data = request.get_json()
+    credentials = {
+        'email': request_data['email'],
+
+    }
+    response_object = users.password_reset(json_object=credentials, id=id, flag='clients')
+    return jsonify(response_object[0]), int(response_object[1])
 
 
-@app.route('/stylist/changepwd', methods=['PUT'])
-def change_stylist_password():
-    pass
+@app.route('/stylist/<int:id>/changepwd', methods=['PUT'])
+def change_stylist_password(id):
+    request_data = request.get_json()
+    credentials = {
+        'email': request_data['email'],
 
-def delete_stylists():
-    pass
-def stylist_engagement_plan():
-    pass
-def register_manager():
-    pass
-
-def get_manager():
-    pass
-def make_client_member():
-    pass
+    }
+    response_object = users.password_reset(json_object=credentials, id=id, flag='stylists')
+    return jsonify(response_object[0]), int(response_object[1])
 
 
-# Slots
+@app.route('/stylist/<int:id>/updateprofile', methods=['PUT'])
+def stylist_changeprofile(id):
+    request_data = request.get_json()
+    update_stylist = {
+        'name': request_data['name'],
+        'phone': request_data['phone'],
+        'email': request_data['email'],
+        'speciality': request_data['speciality'],
+        'id': id
+    }
+    response_object = users.update_profile(json_object=update_stylist, flag='stylists')
+    return jsonify(response_object[0]), int(response_object[1])
+
+
+@app.route('/client/<int:id>/updateprofile', methods=['PUT'])
+def client_changeprofile(id):
+    request_data = request.get_json()
+    update_client = {
+        'name': request_data['name'],
+        'phone': request_data['phone'],
+        'email': request_data['email'],
+        'id': id
+    }
+    response_object = users.update_profile(json_object=update_client, flag='clients')
+    return jsonify(response_object[0]), int(response_object[1])
+
+
 @app.route('/booking', methods=['POST'])
 def open_booking_call():
     request_data = request.get_json()

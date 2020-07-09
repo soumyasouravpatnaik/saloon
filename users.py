@@ -1,5 +1,5 @@
 import sqlite3
-from utilities import find_by_user_phoneno, convert_to_string
+from utilities import find_by_user_phoneno, convert_to_string, sendmail, temp_password, find_by_user_id
 
 
 def post(json_object=None, flag=None):
@@ -130,6 +130,76 @@ def login(json_object=None, flag=None):
                     return {'message': 'User - %s is marked inactive. Please contact Admin..' % convert_to_string(record[0])}, 200
             else:
                 return {'message': 'Invalid Credentials. Try Again'}, 200
+    except Exception as e:
+        print(str(e))
+        return {'message': 'Something went wrong'}, 500
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def password_reset(json_object=None, id=id, flag=None):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    table_name = flag
+    try:
+        email = json_object.get('email')
+        # password = json_object.get('password')
+        if email:
+            query = "SELECT email,black_listed,name FROM %s WHERE LOWER(email)='%s' AND id=%d" % (table_name,
+                                                                                    convert_to_string(email).lower(),
+                                                                                      int(convert_to_string(id)))
+            cursor.execute(query)
+            record = cursor.fetchone()
+            # print(convert_to_string(record[0]))
+            if record:
+                if convert_to_string(record[1]) == 'N':
+                    print(sendmail(receiver=convert_to_string(record[0]), name=convert_to_string(record[2]),
+                                   def_password=convert_to_string(temp_password())))
+                    return {'message': 'Password Reset mail sent to %s' % convert_to_string(record[0])}, 200
+                else:
+                    return {'message': 'User - %s is marked inactive. Please contact Admin..' % convert_to_string(
+                        record[2])}, 200
+            else:
+                return {'message': 'Invalid email/password. Try Again'}, 200
+    except Exception as e:
+        print(str(e))
+        return {'message': 'Something went wrong'}, 500
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def update_profile(json_object=None, flag=None):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    table_name = flag
+    try:
+        name = json_object.get('name'),
+        phone = json_object.get('phone'),
+        email = json_object.get('email'),
+        id = json_object.get('id')
+        check_user = find_by_user_id(id, table_name)
+        if check_user[1] == 'Exception':
+            return {'message': 'Caught Exception'}, 500
+        elif check_user[0] is False:
+            return {'message': 'User doesn\'t exist'}, 409
+        elif check_user[0] is True:
+            if flag in ['stylists']:
+                speciality = json_object['speciality']
+                stylist_query = "UPDATE %s SET name='%s', phone=%d, email='%s', speciality='%s' WHERE id=%d" \
+                                % (table_name, convert_to_string(name), int(convert_to_string(phone)),
+                                   convert_to_string(email), convert_to_string(speciality), int(convert_to_string(id)))
+                print(stylist_query)
+                cursor.execute(stylist_query)
+            else:
+                client_query = "UPDATE %s SET name='%s', phone=%d, email='%s' WHERE id=%d" \
+                                % (table_name, convert_to_string(name), int(convert_to_string(phone)),
+                                   convert_to_string(email), int(convert_to_string(id)))
+                print(client_query)
+                cursor.execute(client_query)
+        connection.commit()
+        return {'message': 'Profile successfully updated'}, 201
     except Exception as e:
         print(str(e))
         return {'message': 'Something went wrong'}, 500

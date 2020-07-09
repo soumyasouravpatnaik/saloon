@@ -1,4 +1,9 @@
 import sqlite3
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from constants import EMAIL_TEMPLATE, sender_email, smtp_ssl, port
+import random
 
 
 def find_by_user_phoneno(phone=None, table_name=None):
@@ -9,6 +14,27 @@ def find_by_user_phoneno(phone=None, table_name=None):
             connection = sqlite3.connect('database.db')
             cursor = connection.cursor()
             query = "SELECT name FROM %s WHERE phone=%d" % (table_name, int(phone))
+            cursor.execute(query)
+            record = cursor.fetchone()
+            if record:
+                existence = True, None
+                # return {'message': 'User with phone number - {} already exists'.format(phone)}, 409
+            cursor.close()
+            connection.close()
+            return existence
+    except:
+        existence = False, 'Exception'
+        return existence
+
+
+def find_by_user_id(id=None, table_name=None):
+    existence = False, None
+    id = convert_to_string(name=id)
+    try:
+        if id:
+            connection = sqlite3.connect('database.db')
+            cursor = connection.cursor()
+            query = "SELECT name FROM %s WHERE id=%d" % (table_name, int(id))
             cursor.execute(query)
             record = cursor.fetchone()
             if record:
@@ -134,3 +160,48 @@ def toggle_black_list(user_id=None, flag=None, active='N'):
     except Exception as e:
         print(str(e))
         return {'message': 'Something went wrong'}, 500
+
+
+def sendmail(receiver=None, name=None, def_password=None):
+    # sender_email = "mail@souravtests.online"
+    receiver_email = receiver
+    password = "Amazon_2020"
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Password Reset"
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    # Create the plain-text and HTML version of your message
+    html = EMAIL_TEMPLATE.format(name, def_password)
+
+    # Turn these into plain/html MIMEText objects
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    message.attach(part2)
+
+    # Create secure connection with server and send email
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_ssl, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(
+            sender_email, receiver_email, message.as_string()
+        )
+
+
+def temp_password():
+    one_part = random.randint(66, 90)
+    sec_part = random.randint(98, 122)
+    thr_part = random.randint(999, 9999)
+    for_part = random.randint(98, 122)
+    password = ''
+    for i in range(8):
+        password = chr(one_part) + chr(sec_part) + str(thr_part) + chr(for_part)
+    return password
+
+
+# if __name__ == '__main__':
+#     temp_password()
+#     sendmail('mailsourav123@gmail.com', name="IronDome", def_password="HGFbsgedhsdf")
