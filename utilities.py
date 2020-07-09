@@ -8,14 +8,15 @@ from constants import EMAIL_TEMPLATE, sender_email, smtp_ssl, port, email_standa
 import random
 
 
-def find_by_user_phoneno(phone=None, table_name=None):
+def find_by_user_phoneno_email(phone=None, email=None, table_name=None):
     existence = False, None
     phone = convert_to_string(name=phone)
+    email = convert_to_string(name=email)
     try:
         if phone:
             connection = sqlite3.connect('database.db')
             cursor = connection.cursor()
-            query = "SELECT name FROM %s WHERE phone=%d" % (table_name, int(phone))
+            query = "SELECT name FROM %s WHERE phone=%d AND email='%s'" % (table_name, int(phone), email)
             cursor.execute(query)
             record = cursor.fetchone()
             if record:
@@ -204,44 +205,44 @@ def temp_password():
 
 
 def validator(name=None, service_name=None, email=None, phone=None, number=None, password=None, price=None):
-    success_capturer = []
+    validation_status_capturer = []
     if name:
         if re.match(name_standard, name):
-            success_capturer.append('True')
+            validation_status_capturer.append('True')
         else:
-            success_capturer.append('False')
+            validation_status_capturer.append('False')
     if phone:
         if re.match(phone_standard, phone):
-            success_capturer.append('True')
+            validation_status_capturer.append('True')
         else:
-            success_capturer.append('False')
+            validation_status_capturer.append('False')
     if email:
         if re.search(email_standard, email):
-            success_capturer.append('True')
+            validation_status_capturer.append('True')
         else:
-            success_capturer.append('False')
+            validation_status_capturer.append('False')
     if number:
         if re.match(id_standard, number):
-            success_capturer.append('True')
+            validation_status_capturer.append('True')
         else:
-            success_capturer.append('False')
+            validation_status_capturer.append('False')
     if password:
         if re.match(pass_standard, password):
-            success_capturer.append('True')
+            validation_status_capturer.append('True')
         else:
-            success_capturer.append('False')
+            validation_status_capturer.append('False')
     if service_name:
         if re.match(sname_standard, service_name):
-            success_capturer.append('True')
+            validation_status_capturer.append('True')
         else:
-            success_capturer.append('False')
+            validation_status_capturer.append('False')
     if price:
         if re.match(price_standard, price):
-            success_capturer.append('True')
+            validation_status_capturer.append('True')
         else:
-            success_capturer.append('False')
+            validation_status_capturer.append('False')
 
-    return success_capturer
+    return validation_status_capturer
 
 
 # if __name__ == '__main__':

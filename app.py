@@ -199,6 +199,7 @@ def cancel_booking_call():
     request_data = request.get_json()
     booking = {
         'booking_id': request_data['booking_id'],
+        'slot_id': request_data['slotID']
     }
     response_object = bookings.cancel(json_object=booking)
     return jsonify(response_object[0]), int(response_object[1])

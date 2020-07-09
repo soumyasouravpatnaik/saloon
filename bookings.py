@@ -3,14 +3,14 @@ from utilities import find_booking_date, find_slots_by_stylists, convert_to_stri
 import users
 import services
 import slots
-
-from flask import jsonify
+from constants import TABLES
+table_name = TABLES[3]
 
 
 def post(json_object=None):
     connection = sqlite3.connect('database.db')
     cursor = connection.cursor()
-    table_name = 'bookings'
+    # table_name = 'bookings'
     try:
         booking_date = json_object.get('booking_date')
         validate = validator(number=convert_to_string(booking_date))
@@ -38,14 +38,13 @@ def post(json_object=None):
 def put(json_object=None):
     connection = sqlite3.connect('database.db')
     cursor = connection.cursor()
-    table_name = 'bookings'
+    # table_name = 'bookings'
     try:
         booking_date = json_object.get('booking_date')
         slotID = json_object.get('slotID'),
         stylistID = json_object.get('stylistID'),
         servicesID = json_object.get('servicesID'),
         clientID = json_object.get('clientID'),
-        # validate = validator(number=convert_to_string(stylistID)).append(validator(number=convert_to_string(clientID)).append(validator(number=convert_to_string(servicesID))).append(validator(number=convert_to_string(booking_date))))
         validate_stylistID = validator(number=convert_to_string(stylistID))
         validate_servicesID = validator(number=convert_to_string(servicesID))
         validate_clientID = validator(number=convert_to_string(clientID))
@@ -66,7 +65,7 @@ def put(json_object=None):
                 .format(booking_date)}, 409
         elif check_slot_for_stylist[0] is False:
             not_blacklisted_stylists = check_blacklisted(stylistID)
-            not_blacklisted_clients = check_blacklisted(clientID, table_name='clients')
+            not_blacklisted_clients = check_blacklisted(clientID, table_name=TABLES[0])
 
             if not_blacklisted_stylists[0] and not_blacklisted_clients[0]:
                 query = "INSERT INTO %s(date, slotID,stylistID,servicesID,status,clientID) " \
@@ -96,7 +95,6 @@ def put(json_object=None):
 def get():
     connection = sqlite3.connect('database.db')
     cursor = connection.cursor()
-    table_name = 'bookings'
     booking_details = []
     try:
         query = "SELECT id, date, slotID, stylistID, servicesID, status, clientID FROM %s" % table_name
@@ -117,10 +115,16 @@ def get():
 def cancel(json_object):
     connection = sqlite3.connect('database.db')
     cursor = connection.cursor()
-    table_name = 'bookings'
+    # table_name = 'bookings'
     try:
         booking_id = json_object.get('booking_id')
-        query = "UPDATE %s SET status='Cancelled' WHERE id=%d AND slotID='%s'" % (table_name, int(convert_to_string(booking_id)))
+        slot_id = convert_to_string(json_object.get('slot_id'))
+        validate = validator(number=booking_id)
+        print(validate)
+        if 'False' in validate:
+            return {'message': 'Data Validation Failed'}, 400
+        query = "UPDATE %s SET status='Cancelled' WHERE id=%d AND slotID='%s'" % (table_name,
+                                                                          int(convert_to_string(booking_id)), slot_id)
         print(query)
         cursor.execute(query)
         connection.commit()
@@ -137,7 +141,6 @@ def cancel(json_object):
 def get_appointments(date):
     connection = sqlite3.connect('database.db')
     cursor = connection.cursor()
-    table_name = 'bookings'
     booking_details = []
     try:
         query = "SELECT stylistID, date, slotID, servicesID, status, clientID FROM %s WHERE date='%s'" % (table_name,

@@ -1,5 +1,5 @@
 import sqlite3
-from utilities import find_by_user_phoneno, convert_to_string, sendmail, temp_password, find_by_user_id, validator
+from utilities import find_by_user_phoneno_email, convert_to_string, sendmail, temp_password, find_by_user_id, validator
 
 
 def post(json_object=None, flag=None):
@@ -17,11 +17,11 @@ def post(json_object=None, flag=None):
         print(validate)
         if 'False' in validate:
             return {'message': 'Data Validation Failed'}, 400
-        check_user = find_by_user_phoneno(phone, table_name)
+        check_user = find_by_user_phoneno_email(phone, email, table_name)
         if check_user[1] == 'Exception':
             return {'message': 'Caught Exception'}, 500
         elif check_user[0] is True:
-            return {'message': 'User with phone number - {} already exists'.format(convert_to_string(phone))}, 409
+            return {'message': 'User with phone number or email ID - {} already exists'.format(convert_to_string(phone))}, 409
         if flag in ['stylists']:
             speciality = convert_to_string(json_object['speciality'])
             stylist_query = "INSERT INTO %s(name,phone,email,password,joining_date,black_listed,speciality) " \

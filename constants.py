@@ -1,3 +1,4 @@
+TABLES = ['clients', 'stylists', 'services', 'bookings']
 email_standard = '^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,6}|[0-9]{1,3})(\]?)$'
 phone_standard = '^[2-9]{2}[0-9]{8}$'
 id_standard = "^[1-9][0-9]*$"
